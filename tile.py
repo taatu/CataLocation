@@ -1,0 +1,156 @@
+import json
+
+from config import Config
+from item import TerrainList
+from PyQt5.QtGui import QImage, QPixmap
+
+
+class TileFile:
+    # TODO: Properly handle bg, especially tiles with only bg and no fg
+
+    def __init__(self, data, parent):
+        self.name = data["file"]
+        self.width = data.setdefault("sprite_width", parent.width)
+        self.height = data.setdefault("sprite_height", parent.height)
+        self.xOffset = data.setdefault("sprite_offset_x", 0)
+        self.yOffset = data.setdefault("sprite_offset_y", 0)
+        self.config = parent.config
+
+        sheetPath = "{}/gfx/{}/{}".format(self.config.path, self.config.tileset, self.name)
+        self.tileSheet = QImage(sheetPath)
+        self.columns = self.tileSheet.width() / self.width
+
+        if "ascii" in data:
+            self.isAscii = True
+            return
+        else:
+            self.isAscii = False
+
+        # use the "comment" field to get the offset of the index
+        if "//" in data:
+            self.indexOffset = str(data["//"])
+            self.indexOffset = self.indexOffset.split(" ")
+            self.indexOffset = int(self.indexOffset[1])
+            if self.indexOffset == 1:
+                self.indexOffset = 0
+        else:
+            print("Warning: tileset is missing tile offsets. May result in graphical errors")
+            self.indexOffset = 0
+
+        self.tileList = self.createTileList(data)
+
+    def createTileList(self, data):
+
+        tileList = []
+        tileData = data["tiles"]
+        for i in tileData:
+            if "fg" not in i:
+                continue
+
+            if isinstance(i["id"], list):
+                for k in i["id"]:
+                    tileList.append(self.fillTileInfo(i, k))
+            else:
+                tileList.append(self.fillTileInfo(i, i["id"]))
+
+        return tileList
+
+    def fillTileInfo(self, parent, idParent):   # Note: may have bugs
+        tile = dict()
+        tile["id"] = idParent
+        tile["fg"] = self.reduceSprite(parent["fg"])
+        if "additional_tiles" in parent:
+            tile = self.getVariants(tile, parent)
+
+        return tile
+
+    def getVariants(self, tile, parent):
+        tile["variants"] = parent["additional_tiles"]
+        for elem in tile["variants"]:
+            if elem["id"] == "center" and "fg" in elem:
+                tile["fg"] = self.reduceSprite(elem["fg"])
+
+        return tile
+
+    @staticmethod
+    def reduceSprite(arg):
+        if isinstance(arg, list):
+            if len(arg) == 0:
+                return -1
+            if isinstance(arg[0], dict):
+                maxWeight = 0
+                for i in arg:
+                    if i["weight"] > maxWeight:
+                        maxWeight = i["weight"]
+                        sprite = i["sprite"]
+            else:
+                sprite = arg[0]
+            return sprite
+        else:
+            return arg
+
+    def getSprite(self, tile):
+        sprite = QPixmap()
+        alt = QImage()
+
+        location = tile["fg"] - self.indexOffset
+        x = (self.width * (location % self.columns))
+        y = (self.height * int(location / self.columns))
+        w = self.width
+        h = self.height
+
+        # print("w: " + str(w) + " h: " + str(h) + " x: " + str(x) + " y: " + str(y))
+
+        sprite.convertFromImage(self.tileSheet.copy(x, y, w, h))
+        return sprite
+
+
+class TileConfig:
+    def __init__(self, filename):
+        try:
+            file = open(filename)
+        except IOError:
+            print("Could not find tile_config.json.")
+            return
+
+        data = json.loads(file.read())
+        tileInfo = data["tile_info"][0]
+        self.pixelScale = tileInfo.setdefault("pixelscale", 1)
+        self.width = tileInfo["width"]
+        self.height = tileInfo["height"]
+        self.config = Config()
+        self.terrainList = TerrainList()
+
+        tilesNew = data["tiles-new"]
+        self.files = []
+
+        for i in tilesNew:
+            tileFile = TileFile(i, self)
+            self.files.append(tileFile)
+
+        file.close()
+
+    def getScale(self):
+        return self.pixelScale * self.height
+
+    def getFallbackSprite(self):
+        sprite = QPixmap()
+        sprite.load("data/assets/quit.png")
+        return sprite
+
+    def getSprite(self, target):
+        for tileFile in self.files:
+            if tileFile.isAscii:
+                continue
+            for tile in tileFile.tileList:
+                if tile["id"] == target:
+                    return tileFile.getSprite(tile)
+
+        try:
+            if self.terrainList.getTerrain(target)["looks_like"] == "Null":
+                return self.getFallbackSprite()
+            else:
+                return self.getSprite(self.terrainList.getTerrain(target)["looks_like"])
+        except TypeError:
+            print("warn: target \"" + str(target) + "\" is not valid")
+            return self.getFallbackSprite()
