@@ -10,8 +10,6 @@ def main():
 
     win = MainWindow()
 
-    terrain = TerrainList()
-
     if config.path == "Null":
         setup = SetupWindow()
         setup.signal.closeSignal.connect(win.finishInit)
