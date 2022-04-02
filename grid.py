@@ -46,13 +46,16 @@ class Grid(QWidget):
 
         for i in range(self.x):
             for j in range(self.y):
-                if self.images[i][j] in self.cache:
-                    cell = Cell(self.cache[self.images[i][j]])
+                current = self.images[i][j]
+                if current in self.cache:
+                    cell = Cell(self.cache[current])
+                    cell.setFixedSize(int(self.tileConfig.getScale()), int(self.tileConfig.getScale()))
                 else:
-                    image = self.tileConfig.getSprite(self.images[i][j])
-                    image = image.scaledToHeight(int(1*self.tileConfig.getScale()))
+                    image = self.tileConfig.getSprite(current)
+                    # image = image.scaledToHeight(int(self.tileConfig.getScale()))
                     cell = Cell(image)
-                    self.cache[self.images[i][j]] = image
+                    cell.setFixedSize(int(self.tileConfig.getScale()), int(self.tileConfig.getScale()))
+                    self.cache[current] = image
                 if self.gridLayout.itemAtPosition(i, j):
                     self.gridLayout.removeWidget(self.gridLayout.itemAtPosition(i, j).widget())
 

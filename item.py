@@ -14,7 +14,7 @@ def copyFrom(origin: list, copy: list) -> list:
                 copy[i] = k
 
     for i in copy:
-        print(str(i))
+        pass
 
     for i in origin:
         if i["name"] == "Null":

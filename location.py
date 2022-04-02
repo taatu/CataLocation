@@ -14,7 +14,6 @@ class Location:
         terrain = data[0]["object"]["terrain"]
         for i in data[0]["object"]["furniture"]:
             if i not in terrain:
-                print(str(i))
                 terrain[i] = data[0]["object"]["furniture"][i]
         rows = data[0]["object"]["rows"]
         self.processed = []

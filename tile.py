@@ -2,11 +2,11 @@ import json
 
 from config import Config
 from item import TerrainList
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QPainter
+from PyQt5.QtCore import Qt
 
 
 class TileFile:
-    # TODO: Properly handle bg, especially tiles with only bg and no fg
 
     def __init__(self, data, parent):
         self.name = data["file"]
@@ -15,6 +15,7 @@ class TileFile:
         self.xOffset = data.setdefault("sprite_offset_x", 0)
         self.yOffset = data.setdefault("sprite_offset_y", 0)
         self.config = parent.config
+        self.pixelScale = parent.pixelScale
 
         sheetPath = "{}/gfx/{}/{}".format(self.config.path, self.config.tileset, self.name)
         self.tileSheet = QImage(sheetPath)
@@ -44,7 +45,7 @@ class TileFile:
         tileList = []
         tileData = data["tiles"]
         for i in tileData:
-            if "fg" not in i:
+            if ("fg" not in i) and ("bg" not in i):
                 continue
 
             if isinstance(i["id"], list):
@@ -55,10 +56,13 @@ class TileFile:
 
         return tileList
 
-    def fillTileInfo(self, parent, idParent):   # Note: may have bugs
+    def fillTileInfo(self, parent, idParent):
         tile = dict()
         tile["id"] = idParent
-        tile["fg"] = self.reduceSprite(parent["fg"])
+        if "fg" in parent:
+            tile["fg"] = self.reduceSprite(parent["fg"])
+        if "bg" in parent:
+            tile["bg"] = self.reduceSprite(parent["bg"])
         if "additional_tiles" in parent:
             tile = self.getVariants(tile, parent)
 
@@ -90,19 +94,36 @@ class TileFile:
             return arg
 
     def getSprite(self, tile):
-        sprite = QPixmap()
-        alt = QImage()
+        foreground = QPixmap()
+        background = QPixmap()
+        out = QPixmap(self.width, self.height)
+        foreground.fill(Qt.transparent)
+        background.fill(Qt.transparent)
+        out.fill(Qt.black)
+        painter = QPainter(out)
 
-        location = tile["fg"] - self.indexOffset
-        x = (self.width * (location % self.columns))
-        y = (self.height * int(location / self.columns))
-        w = self.width
-        h = self.height
+        if "fg" in tile:
+            location = tile["fg"] - self.indexOffset
+            x = (self.width * (location % self.columns)) - int(self.xOffset)
+            y = (self.height * int(location / self.columns)) - int(self.yOffset/2)
+            w = self.width
+            h = self.height
+            foreground.convertFromImage(self.tileSheet.copy(x, y, w, h))
 
-        # print("w: " + str(w) + " h: " + str(h) + " x: " + str(x) + " y: " + str(y))
+        if "bg" in tile:
+            location = tile["bg"] - self.indexOffset
+            x = (self.width * (location % self.columns)) - int(self.xOffset)
+            y = (self.height * int(location / self.columns)) - int(self.yOffset/2)
+            w = self.width
+            h = self.height
+            background.convertFromImage(self.tileSheet.copy(x, y, w, h))
 
-        sprite.convertFromImage(self.tileSheet.copy(x, y, w, h))
-        return sprite
+        painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        painter.drawPixmap(0, 0, background)
+        painter.drawPixmap(0, 0, foreground)
+        painter.end()
+
+        return out.scaledToHeight(self.height * self.pixelScale)
 
 
 class TileConfig:
