@@ -6,6 +6,14 @@ from PyQt5.QtGui import QImage, QPixmap, QPainter
 from PyQt5.QtCore import Qt
 
 
+class Pixmap(QPixmap):
+    def __init__(self, xOffset, yOffset, qPixmap):
+        super().__init__(qPixmap)
+        self.xOffset = xOffset
+        self.yOffset = yOffset
+        self.layer = 0
+
+
 class TileFile:
 
     def __init__(self, data, parent):
@@ -104,16 +112,16 @@ class TileFile:
 
         if "fg" in tile:
             location = tile["fg"] - self.indexOffset
-            x = (self.width * (location % self.columns)) - int(self.xOffset)
-            y = (self.height * int(location / self.columns)) - int(self.yOffset/2)
+            x = (self.width * (location % self.columns))
+            y = (self.height * int(location / self.columns))
             w = self.width
             h = self.height
             foreground.convertFromImage(self.tileSheet.copy(x, y, w, h))
 
         if "bg" in tile:
             location = tile["bg"] - self.indexOffset
-            x = (self.width * (location % self.columns)) - int(self.xOffset)
-            y = (self.height * int(location / self.columns)) - int(self.yOffset/2)
+            x = (self.width * (location % self.columns))
+            y = (self.height * int(location / self.columns))
             w = self.width
             h = self.height
             background.convertFromImage(self.tileSheet.copy(x, y, w, h))
@@ -123,7 +131,8 @@ class TileFile:
         painter.drawPixmap(0, 0, foreground)
         painter.end()
 
-        return out.scaledToHeight(self.height * self.pixelScale)
+        pixmap = Pixmap(self.xOffset, self.yOffset, out.scaledToHeight(self.height * self.pixelScale))
+        return pixmap
 
 
 class TileConfig:
@@ -157,7 +166,8 @@ class TileConfig:
     def getFallbackSprite(self):
         sprite = QPixmap()
         sprite.load("data/assets/quit.png")
-        return sprite
+        out = Pixmap(0, 0, sprite.scaledToHeight(self.height))
+        return out
 
     def getSprite(self, target):
         for tileFile in self.files:

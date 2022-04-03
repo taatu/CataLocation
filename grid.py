@@ -1,4 +1,4 @@
-from tile import TileConfig
+from tile import TileConfig, Pixmap
 from config import Config
 from menu import *
 from location import Location
@@ -7,9 +7,39 @@ from location import Location
 
 
 class Cell(QLabel):
-    def __init__(self, image):
+    def __init__(self, parent):
         super().__init__()
-        self.setPixmap(image)
+        self.parent = parent
+        self.pixmapList = []
+        self.labelList = []
+
+    def addPixmap(self, pixmap: Pixmap):
+        # print(str(pixmap.height()))
+        length = len(self.pixmapList)
+        if length == 0:
+            self.pixmapList.append(pixmap)
+        else:
+            for i in range(length):
+                if pixmap.layer >= self.pixmapList[i].layer:
+                    self.pixmapList.insert(i, pixmap)      # inserts BEFORE i-th element
+                    break
+
+    def get(self):
+        super().show()
+        if not self.isVisible():
+            return
+        pos = self.mapToGlobal(QPoint(0, 0))
+        x = pos.x()
+        y = pos.y()
+        print("len: " + str(len(self.labelList)))
+        for i in self.pixmapList:
+            label = QLabel(self.parent)
+            print("x: " + str(x) + " y: " + str(y))
+            label.setFixedSize(i.width(), i.height())
+            label.setPixmap(i)
+            self.labelList.append(label)
+            label.move(x-i.xOffset-self.parent.xPos, y-i.yOffset-self.parent.yPos)
+            label.show()
 
 
 class Grid(QWidget):
@@ -24,6 +54,8 @@ class Grid(QWidget):
         self.tileConfig = None
         self.x = 24
         self.y = 24
+        self.xPos = None
+        self.yPos = None
 
         self.location = Location("{}/data/json/mapgen/daycare.json".format(self.config.path))
 
@@ -31,7 +63,7 @@ class Grid(QWidget):
 
         self.cache = {}
 
-        self.updateTileConfig()
+        # self.updateTileConfig()
 
         self.gridLayout.setSpacing(0)
         self.gridLayout.setAlignment(Qt.AlignCenter)
@@ -42,24 +74,33 @@ class Grid(QWidget):
         self.path = "{}/gfx/{}/tile_config.json".format(self.config.path, self.config.tileset)
         self.tileConfig = TileConfig(self.path)
         self.setMinimumSize(24*self.tileConfig.getScale(), 24*self.tileConfig.getScale())
-        prev = None
+        pos = self.mapToGlobal(QPoint(0, 0))
+        self.xPos = pos.x()
+        self.yPos = pos.y()
 
         for i in range(self.x):
             for j in range(self.y):
                 current = self.images[i][j]
                 if current in self.cache:
-                    cell = Cell(self.cache[current])
+                    cell = Cell(self)
+                    cell.addPixmap(self.cache[current])
                     cell.setFixedSize(int(self.tileConfig.getScale()), int(self.tileConfig.getScale()))
                 else:
                     image = self.tileConfig.getSprite(current)
                     # image = image.scaledToHeight(int(self.tileConfig.getScale()))
-                    cell = Cell(image)
+                    cell = Cell(self)
+                    cell.addPixmap(image)
                     cell.setFixedSize(int(self.tileConfig.getScale()), int(self.tileConfig.getScale()))
                     self.cache[current] = image
                 if self.gridLayout.itemAtPosition(i, j):
                     self.gridLayout.removeWidget(self.gridLayout.itemAtPosition(i, j).widget())
 
                 self.gridLayout.addWidget(cell, i, j)
+                cell.get()
+
+    def getGridGlobalPos(self, x: int, y: int) -> QPoint:
+        """Only works after main window has been drawn."""
+        return self.gridLayout.itemAtPosition(x, y).widget().getty()
 
 
 class ScrollWrap(QScrollArea):
@@ -109,6 +150,7 @@ class MainWindow(QMainWindow):
 
     def finishInit(self):   # Called from main()
         print("Running now!")
+        self.show()
         if self.config.theme == "dark":
             import qdarktheme
             self.setStyleSheet(qdarktheme.load_stylesheet())
@@ -118,4 +160,5 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(wrapper)
         menuBar = self.initMenuBar()
         self.show()
+
 
