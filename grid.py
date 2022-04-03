@@ -39,6 +39,9 @@ class Cell(QLabel):
             label.move(x+i.xOffset-self.parent.xPos, y+i.yOffset-self.parent.yPos)
             label.show()
 
+    def mousePressEvent(self, event):
+        print(self.pixmapList[0].name)
+
 
 class Grid(QWidget):
     def __init__(self):
@@ -100,6 +103,9 @@ class Grid(QWidget):
                 self.gridLayout.addWidget(cell, i, j)
                 cell.draw()
 
+        for i in range(self.x):     # raise cells to the top so they can be clicked
+            for j in range(self.y):
+                self.gridLayout.itemAtPosition(i, j).widget().raise_()
 
 class ScrollWrap(QScrollArea):
     def __init__(self, widget):

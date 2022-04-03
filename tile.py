@@ -7,8 +7,9 @@ from PyQt5.QtCore import Qt
 
 
 class Pixmap(QPixmap):
-    def __init__(self, xOffset, yOffset, qPixmap):
+    def __init__(self, name, xOffset, yOffset, qPixmap):
         super().__init__(qPixmap)
+        self.name = name
         self.xOffset = xOffset
         self.yOffset = yOffset
         self.layer = 0
@@ -135,7 +136,7 @@ class TileFile:
         yOffset = self.yOffset * self.pixelScale
         height = self.height * self.pixelScale
 
-        pixmap = Pixmap(xOffset, yOffset, out.scaledToHeight(height))
+        pixmap = Pixmap(tile["id"], xOffset, yOffset, out.scaledToHeight(height))
         return pixmap
 
 
@@ -170,7 +171,7 @@ class TileConfig:
     def getFallbackSprite(self):
         sprite = QPixmap()
         sprite.load("data/assets/quit.png")
-        out = Pixmap(0, 0, sprite.scaledToHeight(self.height*self.pixelScale))
+        out = Pixmap("Null", 0, 0, sprite.scaledToHeight(self.height*self.pixelScale))
         return out
 
     def getSprite(self, target):
