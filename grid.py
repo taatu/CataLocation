@@ -14,7 +14,6 @@ class Cell(QLabel):
         self.labelList = []
 
     def addPixmap(self, pixmap: Pixmap):
-        # print(str(pixmap.height()))
         length = len(self.pixmapList)
         if length == 0:
             self.pixmapList.append(pixmap)
@@ -24,21 +23,20 @@ class Cell(QLabel):
                     self.pixmapList.insert(i, pixmap)      # inserts BEFORE i-th element
                     break
 
-    def get(self):
+    def draw(self):
         super().show()
         if not self.isVisible():
             return
         pos = self.mapToGlobal(QPoint(0, 0))
         x = pos.x()
         y = pos.y()
-        print("len: " + str(len(self.labelList)))
+
         for i in self.pixmapList:
             label = QLabel(self.parent)
-            print("x: " + str(x) + " y: " + str(y))
             label.setFixedSize(i.width(), i.height())
             label.setPixmap(i)
             self.labelList.append(label)
-            label.move(x-i.xOffset-self.parent.xPos, y-i.yOffset-self.parent.yPos)
+            label.move(x+i.xOffset-self.parent.xPos, y+i.yOffset-self.parent.yPos)
             label.show()
 
 
@@ -69,6 +67,10 @@ class Grid(QWidget):
         self.gridLayout.setAlignment(Qt.AlignCenter)
 
     def updateTileConfig(self):
+        self._updateTileConfig()
+        QTimer.singleShot(0, self._updateTileConfig)
+
+    def _updateTileConfig(self):
         self.config = Config()
         self.cache.clear()
         self.path = "{}/gfx/{}/tile_config.json".format(self.config.path, self.config.tileset)
@@ -78,17 +80,17 @@ class Grid(QWidget):
         self.xPos = pos.x()
         self.yPos = pos.y()
 
+        self.gridLayout.update()
         for i in range(self.x):
             for j in range(self.y):
                 current = self.images[i][j]
+                cell = Cell(self)
                 if current in self.cache:
-                    cell = Cell(self)
                     cell.addPixmap(self.cache[current])
                     cell.setFixedSize(int(self.tileConfig.getScale()), int(self.tileConfig.getScale()))
                 else:
                     image = self.tileConfig.getSprite(current)
                     # image = image.scaledToHeight(int(self.tileConfig.getScale()))
-                    cell = Cell(self)
                     cell.addPixmap(image)
                     cell.setFixedSize(int(self.tileConfig.getScale()), int(self.tileConfig.getScale()))
                     self.cache[current] = image
@@ -96,11 +98,7 @@ class Grid(QWidget):
                     self.gridLayout.removeWidget(self.gridLayout.itemAtPosition(i, j).widget())
 
                 self.gridLayout.addWidget(cell, i, j)
-                cell.get()
-
-    def getGridGlobalPos(self, x: int, y: int) -> QPoint:
-        """Only works after main window has been drawn."""
-        return self.gridLayout.itemAtPosition(x, y).widget().getty()
+                cell.draw()
 
 
 class ScrollWrap(QScrollArea):
@@ -160,5 +158,4 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(wrapper)
         menuBar = self.initMenuBar()
         self.show()
-
-
+        self.grid.updateTileConfig()

@@ -107,7 +107,7 @@ class TileFile:
         out = QPixmap(self.width, self.height)
         foreground.fill(Qt.transparent)
         background.fill(Qt.transparent)
-        out.fill(Qt.black)
+        out.fill(Qt.transparent)
         painter = QPainter(out)
 
         if "fg" in tile:
@@ -131,7 +131,11 @@ class TileFile:
         painter.drawPixmap(0, 0, foreground)
         painter.end()
 
-        pixmap = Pixmap(self.xOffset, self.yOffset, out.scaledToHeight(self.height * self.pixelScale))
+        xOffset = self.xOffset * self.pixelScale
+        yOffset = self.yOffset * self.pixelScale
+        height = self.height * self.pixelScale
+
+        pixmap = Pixmap(xOffset, yOffset, out.scaledToHeight(height))
         return pixmap
 
 
@@ -166,7 +170,7 @@ class TileConfig:
     def getFallbackSprite(self):
         sprite = QPixmap()
         sprite.load("data/assets/quit.png")
-        out = Pixmap(0, 0, sprite.scaledToHeight(self.height))
+        out = Pixmap(0, 0, sprite.scaledToHeight(self.height*self.pixelScale))
         return out
 
     def getSprite(self, target):
