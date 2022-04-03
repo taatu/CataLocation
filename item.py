@@ -32,7 +32,7 @@ class TerrainList:
         self.files = getFileNames(self.path)
         self.terrainList = self._loadTerrain()
 
-    def _loadTerrain(self):
+    def _loadTerrain(self) -> list:
         terrainList = []
         copyList = []
         for i in self.files:

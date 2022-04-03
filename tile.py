@@ -7,7 +7,7 @@ from PyQt5.QtCore import Qt
 
 
 class Pixmap(QPixmap):
-    def __init__(self, name, xOffset, yOffset, qPixmap):
+    def __init__(self, name: str, xOffset: int, yOffset: int, qPixmap: QPixmap):
         super().__init__(qPixmap)
         self.name = name
         self.xOffset = xOffset
@@ -17,7 +17,7 @@ class Pixmap(QPixmap):
 
 class TileFile:
 
-    def __init__(self, data, parent):
+    def __init__(self, data: dict, parent):
         self.name = data["file"]
         self.width = data.setdefault("sprite_width", parent.width)
         self.height = data.setdefault("sprite_height", parent.height)
@@ -49,7 +49,7 @@ class TileFile:
 
         self.tileList = self.createTileList(data)
 
-    def createTileList(self, data):
+    def createTileList(self, data: dict) -> list:
 
         tileList = []
         tileData = data["tiles"]
@@ -65,7 +65,7 @@ class TileFile:
 
         return tileList
 
-    def fillTileInfo(self, parent, idParent):
+    def fillTileInfo(self, parent: dict, idParent: str) -> dict:
         tile = dict()
         tile["id"] = idParent
         if "fg" in parent:
@@ -77,7 +77,7 @@ class TileFile:
 
         return tile
 
-    def getVariants(self, tile, parent):
+    def getVariants(self, tile: dict, parent: dict) -> dict:
         tile["variants"] = parent["additional_tiles"]
         for elem in tile["variants"]:
             if elem["id"] == "center" and "fg" in elem:
@@ -86,7 +86,7 @@ class TileFile:
         return tile
 
     @staticmethod
-    def reduceSprite(arg):
+    def reduceSprite(arg) -> int:
         if isinstance(arg, list):
             if len(arg) == 0:
                 return -1
@@ -102,7 +102,7 @@ class TileFile:
         else:
             return arg
 
-    def getSprite(self, tile):
+    def getSprite(self, tile: dict) -> Pixmap:
         foreground = QPixmap()
         background = QPixmap()
         out = QPixmap(self.width, self.height)
@@ -165,16 +165,16 @@ class TileConfig:
 
         file.close()
 
-    def getScale(self):
+    def getScale(self) -> int:
         return self.pixelScale * self.height
 
-    def getFallbackSprite(self):
+    def getFallbackSprite(self) -> Pixmap:
         sprite = QPixmap()
         sprite.load("data/assets/quit.png")
         out = Pixmap("Null", 0, 0, sprite.scaledToHeight(self.height*self.pixelScale))
         return out
 
-    def getSprite(self, target):
+    def getSprite(self, target: str) -> Pixmap:
         for tileFile in self.files:
             if tileFile.isAscii:
                 continue

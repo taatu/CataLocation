@@ -41,7 +41,7 @@ class Config:
         json.dump(out, configFile)
         configFile.close()
 
-    def verifyPath(self):
+    def verifyPath(self) -> bool:
         exactPath = self.path + "/data/cataicon.ico"
         try:
             f = open(exactPath)

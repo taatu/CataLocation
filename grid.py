@@ -64,8 +64,6 @@ class Grid(QWidget):
 
         self.cache = {}
 
-        # self.updateTileConfig()
-
         self.gridLayout.setSpacing(0)
         self.gridLayout.setAlignment(Qt.AlignCenter)
 
@@ -74,6 +72,7 @@ class Grid(QWidget):
         QTimer.singleShot(0, self._updateTileConfig)
 
     def _updateTileConfig(self):
+        """Due to using absolute positioning, this needs to be run twice"""
         self.config = Config()
         self.cache.clear()
         self.path = "{}/gfx/{}/tile_config.json".format(self.config.path, self.config.tileset)
@@ -83,7 +82,6 @@ class Grid(QWidget):
         self.xPos = pos.x()
         self.yPos = pos.y()
 
-        self.gridLayout.update()
         for i in range(self.x):
             for j in range(self.y):
                 current = self.images[i][j]
@@ -106,6 +104,7 @@ class Grid(QWidget):
         for i in range(self.x):     # raise cells to the top so they can be clicked
             for j in range(self.y):
                 self.gridLayout.itemAtPosition(i, j).widget().raise_()
+
 
 class ScrollWrap(QScrollArea):
     def __init__(self, widget):
