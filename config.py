@@ -24,7 +24,7 @@ class Config:
                 shutil.copyfile("data/defaultconfig.cfg", "config.cfg")
                 configFile = open("config.cfg")
             except IOError:
-                msg = "Error: Could not open config file. Check that CDDAMap.py has permission to read and write files"
+                msg = "Error: Could not open config file. Check that CataLocation.py has permission to read/write files"
                 print(msg)
                 return None
 
