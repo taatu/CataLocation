@@ -2,6 +2,14 @@ import json
 from config import Config
 
 
+def unList(target):
+    """Get a value from the bottom of nested 1-element lists"""
+    if isinstance(target, list):
+        return unList(target[0])
+
+    return target
+
+
 class Location:
     def __init__(self, filename):
         try:
@@ -23,16 +31,8 @@ class Location:
                 found = False
                 for i in terrain:
                     if i == rows[j][k]:
-                        if isinstance(terrain[i], list):
-                            if isinstance(terrain[i][0], list):
-                                found = True
-                                self.processed[j].append(terrain[i][0][0])
-                            else:
-                                found = True
-                                self.processed[j].append(terrain[i][0])
-                        else:
-                            found = True
-                            self.processed[j].append(terrain[i])
+                        found = True
+                        self.processed[j].append(unList(terrain[i]))
                 if not found:
                     self.processed[j].append("Null")
         print("Loc done.")

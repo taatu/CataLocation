@@ -12,43 +12,48 @@ class Icon(QIcon):
         super().__init__(FOLDER + filename)
 
 
-class NewAction(QAction):
+class FileAction(QAction):
+    def __init__(self, icon: str, text: str, parent):
+        super().__init__(Icon(icon), text, parent)
+
+
+class NewAction(FileAction):
     def __init__(self, parent):
-        super().__init__(Icon("new.png"), "&New", parent)
+        super().__init__("new.png", "&New", parent)
         self.setShortcut("Ctrl+N")
         self.setStatusTip("Create a new document")
 
 
-class OpenAction(QAction):
+class OpenAction(FileAction):
     def __init__(self, parent):
-        super().__init__(Icon("open.png"), "&Open", parent)
+        super().__init__("open.png", "&Open", parent)
         self.setStatusTip("Open a file")
 
 
-class SaveAction(QAction):
+class SaveAction(FileAction):
     def __init__(self, parent):
-        super().__init__(Icon("save.png"), "Save", parent)
+        super().__init__("save.png", "Save", parent)
         self.setShortcut("Ctrl+S")
         self.setStatusTip("Save the current document")
 
 
-class SaveAsAction(QAction):
+class SaveAsAction(FileAction):
     def __init__(self, parent):
-        super().__init__(Icon("saveas.png"), "Save as..", parent)
+        super().__init__("saveas.png", "Save as..", parent)
         self.setStatusTip("Save the current document as a new document")
 
 
-class PrefsAction(QAction):
+class PrefsAction(FileAction):
     def __init__(self, parent):
-        super().__init__(Icon("settings.png"), "Preferences", parent)
+        super().__init__("settings.png", "Preferences", parent)
         self.setStatusTip("Open the settings menu")
         self.prefsWindow = PrefsWindow()
         self.triggered.connect(lambda: self.prefsWindow.show())
 
 
-class QuitAction(QAction):
+class QuitAction(FileAction):
     def __init__(self, parent):
-        super().__init__(Icon("quit.png"), "Quit", parent)
+        super().__init__("quit.png", "Quit", parent)
         self.setShortcut("Ctrl+Q")
         self.setStatusTip("Exit the application")
         self.triggered.connect(qApp.quit)

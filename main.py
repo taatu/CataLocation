@@ -1,7 +1,6 @@
 import sys
 from setupwindow import SetupWindow
 from grid import *
-from item import TerrainList
 
 
 def main():

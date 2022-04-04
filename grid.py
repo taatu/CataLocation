@@ -3,8 +3,6 @@ from config import Config
 from menu import *
 from location import Location
 
-# import qdarktheme
-
 
 class Cell(QLabel):
     def __init__(self, parent):
@@ -40,7 +38,8 @@ class Cell(QLabel):
             label.show()
 
     def mousePressEvent(self, event):
-        print(self.pixmapList[0].name)
+        for i in self.pixmapList:
+            print(str(i.name))
 
 
 class Grid(QWidget):
@@ -124,31 +123,20 @@ class MainWindow(QMainWindow):
 
     def initMenuBar(self):
         menuBar = self.menuBar()
+
         fileMenu = menuBar.addMenu("&File")
-
-        newAction = NewAction(self)
-        openAction = OpenAction(self)
-        saveAction = SaveAction(self)
-        saveAsAction = SaveAsAction(self)
-        prefsAction = PrefsAction(self)
-        quitAction = QuitAction(self)
-
-        fileMenu.addAction(newAction)
-        fileMenu.addAction(openAction)
-        fileMenu.addAction(saveAction)
-        fileMenu.addAction(saveAsAction)
-        fileMenu.addAction(prefsAction)
-        fileMenu.addAction(quitAction)
+        for Class in FileAction.__subclasses__():
+            fileMenu.addAction(Class(self))
 
         editMenu = menuBar.addMenu("&Edit")
 
         viewMenu = menuBar.addMenu("&View")
-
         tilesetMenu = TilesetMenu(self)
         tilesetMenu.signal.tilesetSignal.connect(self.grid.updateTileConfig)
         viewMenu.addMenu(tilesetMenu)
 
         helpMenu = menuBar.addMenu("&Help")
+
         return menuBar
 
     def finishInit(self):   # Called from main()
