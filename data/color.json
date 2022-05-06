@@ -1,0 +1,18 @@
+[
+  {"bold": true, "color": "WHITE", "colorcode": "white"},
+  {"bold": false, "color": "WHITE", "colorcode": "light_gray"},
+  {"bold": true, "color": "BLACK", "colorcode": "dark_gray"},
+  {"bold": false, "color": "BLACK", "colorcode": "black"},
+  {"bold": true, "color": "RED", "colorcode": "light_red"},
+  {"bold": false, "color": "RED", "colorcode": "red"},
+  {"bold": true, "color": "YELLOW", "colorcode": "yellow"},
+  {"bold": false, "color": "YELLOW", "colorcode": "brown"},
+  {"bold": true, "color": "GREEN", "colorcode": "light_green"},
+  {"bold": false, "color": "GREEN", "colorcode": "green"},
+  {"bold": true, "color": "CYAN", "colorcode": "light_cyan"},
+  {"bold": false, "color": "CYAN", "colorcode": "cyan"},
+  {"bold": true, "color": "BLUE", "colorcode": "light_blue"},
+  {"bold": false, "color": "BLUE", "colorcode": "blue"},
+  {"bold": true, "color": "MAGENTA", "colorcode": "pink"},
+  {"bold": false, "color": "MAGENTA", "colorcode": "magenta"}
+]

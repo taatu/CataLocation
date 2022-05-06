@@ -1,4 +1,4 @@
-import json
+from common import *
 
 from config import Config
 from item import TerrainList
@@ -32,6 +32,7 @@ class TileFile:
 
         if "ascii" in data:
             self.isAscii = True
+            self.tileList = self.createFallback(data["ascii"])
             return
         else:
             self.isAscii = False
@@ -48,6 +49,47 @@ class TileFile:
             self.indexOffset = 0
 
         self.tileList = self.createTileList(data)
+
+    def createFallback(self, data):
+        colorCodes = loadJsonFile("data/color.json")
+        tileList = []
+        for i in data:
+            tileList.append(self.getColor(i, colorCodes))
+        print(str(tileList))
+        return tileList
+
+    @staticmethod
+    def getColor(data, colorCodes):
+        tile = dict()
+        for i in colorCodes:
+            if i["bold"] == data["bold"] and i["color"] == data["color"]:
+                tile["color"] = i["colorcode"]
+                tile["offset"] = data["offset"]
+                return tile
+
+    def getFallbackSprite(self, target, color, symbol, parent) -> Pixmap:
+        offset = None
+        for i in self.tileList:
+            if i["color"] == color:
+                offset = i["offset"]
+
+        if offset is None:
+            print("Invalid color: " + str(color))
+            return parent.getErrorSprite()
+
+        img = QPixmap()
+        if len(symbol) == 1:
+            location = offset + ord(symbol)
+        else:
+            location = offset + ord("|")
+        x = (self.width * (location % self.columns))
+        y = (self.height * int(location / self.columns))
+        w = self.width
+        h = self.height
+        height = self.height * self.pixelScale
+        img.convertFromImage(self.tileSheet.copy(x, y, w, h))
+        pixmap = Pixmap(target, 0, 0, img.scaledToHeight(height))
+        return pixmap
 
     def createTileList(self, data: dict) -> list:
 
@@ -142,13 +184,7 @@ class TileFile:
 
 class TileConfig:
     def __init__(self, filename):
-        try:
-            file = open(filename)
-        except IOError:
-            print("Could not find tile_config.json.")
-            return
-
-        data = json.loads(file.read())
+        data = loadJsonFile(filename)
         tileInfo = data["tile_info"][0]
         self.pixelScale = tileInfo.setdefault("pixelscale", 1)
         self.width = tileInfo["width"]
@@ -163,12 +199,18 @@ class TileConfig:
             tileFile = TileFile(i, self)
             self.files.append(tileFile)
 
-        file.close()
-
     def getScale(self) -> int:
         return self.pixelScale * self.height
 
-    def getFallbackSprite(self) -> Pixmap:
+    def getFallbackSprite(self, target) -> Pixmap:
+        item = self.terrainList.getTerrain(target)
+        color = item["color"]
+        symbol = item["symbol"]
+        for tileFile in self.files:
+            if tileFile.isAscii:
+                return tileFile.getFallbackSprite(target, color, symbol, self)
+
+    def getErrorSprite(self) -> Pixmap:
         sprite = QPixmap()
         sprite.load("data/assets/quit.png")
         out = Pixmap("Null", 0, 0, sprite.scaledToHeight(self.height*self.pixelScale))
@@ -184,9 +226,9 @@ class TileConfig:
 
         try:
             if self.terrainList.getTerrain(target)["looks_like"] == "Null":
-                return self.getFallbackSprite()
+                return self.getFallbackSprite(target)
             else:
                 return self.getSprite(self.terrainList.getTerrain(target)["looks_like"])
         except TypeError:
             print("warn: target \"" + str(target) + "\" is not valid")
-            return self.getFallbackSprite()
+            return self.getErrorSprite()
